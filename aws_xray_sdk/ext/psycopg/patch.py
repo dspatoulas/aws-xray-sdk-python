@@ -21,17 +21,19 @@ def patch():
 def _xray_traced_connect(wrapped, instance, args, kwargs):
     conn = wrapped(*args, **kwargs)
     parameterized_dsn = {c[0]: c[-1] for c in map(methodcaller('split', '='), conn.info.dsn.split(' '))}
+    db_name = parameterized_dsn.get('dbname', 'unknown')
     meta = {
         'database_type': 'PostgreSQL',
         'url': 'postgresql://{}@{}:{}/{}'.format(
             parameterized_dsn.get('user', 'unknown'),
             parameterized_dsn.get('host', 'unknown'),
             parameterized_dsn.get('port', 'unknown'),
-            parameterized_dsn.get('dbname', 'unknown'),
+            db_name,
         ),
         'user': parameterized_dsn.get('user', 'unknown'),
         'database_version': str(conn.info.server_version),
-        'driver_version': 'Psycopg 3'
+        'driver_version': 'Psycopg 3',
+        'name': db_name,
     }
 
     return XRayTracedConn(conn, meta)
